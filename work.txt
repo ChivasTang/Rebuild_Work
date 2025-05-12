@@ -1,1 +1,3 @@
-$destToken = "EFrAi3QJmqr1xO83LRgAwvsLo7TTNCmrqsTbXaAcKCBrqOd8ug1fJQQJ99BDACAAAAAsRMRtAAASAZDO2S0j"
+domain=https://dev.azure.com/capdd3
+token=EFrAi3QJmqr1xO83LRgAwvsLo7TTNCmrqsTbXaAcKCBrqOd8ug1fJQQJ99BDACAAAAAsRMRtAAASAZDO2S0j
+host=Mobile
