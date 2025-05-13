@@ -1,0 +1,92 @@
+# 名称
+name: $(Date:yyyy_MM_dd_HH_mm_ss)
+
+# 触発Trigger
+trigger:
+  - main
+
+# 環境変数
+variables:
+  APP_NAME: C_SAAF_Mobile
+  IOS_P12_FILE: $(Agent.ToolsDirectory)/certs/ios/C_SAAF_Mobile.p12
+  IOS_P12_PASS: Dongying19911218
+  IOS_PROVISION: $(Agent.ToolsDirectory)/certs/ios/CSAAFMobile.mobileprovision
+  IOS_TEAM_ID: 8H26AJ8X5P
+  IOS_SPECIFIER: CSAAFMobile
+  APK_RENAMED: $(APP_NAME)_$(Build.BuildId)_$(Date:yyyyMMddHHmmss)
+
+# エージェントプール
+pool:
+  name: $(APP_NAME)
+  demands:
+    - Agent.Name -equals C_SAAF_Mobile_Host
+
+# ステージ
+stages:
+  - stage: Setup
+    jobs:
+      - job: Setup
+        displayName: ビルド・デプロイ
+        steps:
+          - script: |
+              echo "1. NodeJS依頼関係インストール"
+              npm install
+              bundle install
+              
+              echo "2. Podインストール"
+              cd ios && pod install && cd ..
+              echo "所在フォルダ(exec pod)：$(eval pwd)"
+            displayName: ReactNative依頼関係インストール
+
+          - task: Gradle@3
+            inputs:
+              gradleWrapperFile: 'android/gradlew'
+              workingDirectory: 'android'
+              tasks: 'clean assembleRelease'
+              publishJUnitResults: false
+            displayName: Androidクリーン・ビルド
+
+          - task: CopyFiles@2
+            inputs:
+              sourceFolder: '$(System.DefaultWorkingDirectory)/android/app/build/outputs/apk/release'
+              contents: 'app-release.apk'
+              targetFolder: '$(Build.ArtifactStagingDirectory)'
+            displayName: 'APKファイルをステジングディレクトリにコピー'
+
+          - script: |
+              mv "$(Build.ArtifactStagingDirectory)/app-release.apk" "$(Build.ArtifactStagingDirectory)/$(APK_RENAMED).apk"
+            displayName: 'APKファイル名称修正'
+
+          - task: PublishBuildArtifacts@1
+            inputs:
+              PathtoPublish: '$(Build.ArtifactStagingDirectory)'
+              ArtifactName: 'apk'
+              publishLocation: 'Container'
+            displayName: 'AzureのArtifactにAPKをアップロード'
+
+          - script: |
+              cd ios
+              echo "1. ビルドをクリーン"
+              xcodebuild clean -workspace $(APP_NAME).xcworkspace -scheme $(APP_NAME) -configuration Release
+              echo "2. p12証明書をインストール・検証"
+              security import $(IOS_P12_FILE) -P $(IOS_P12_PASS) -A && security find-identity -v -p codesigning
+              echo "3. プロビジョニングプロファイルをインストール"
+              mkdir -p ~/Library/MobileDevice/Provisioning\ Profiles
+              cp $(IOS_PROVISION) ~/Library/MobileDevice/Provisioning\ Profiles/
+              echo "4. archiveを作成"
+              xcodebuild archive \
+                -workspace $(APP_NAME).xcworkspace \
+                -scheme $(APP_NAME) \
+                -configuration Release \
+                -archivePath ./build/$(APP_NAME).xcarchive \
+                -sdk iphoneos \
+                DEVELOPMENT_TEAM=$(IOS_TEAM_ID) \
+                PROVISIONING_PROFILE_SPECIFIER="$(IOS_SPECIFIER)" \
+                CODE_SIGN_IDENTITY="Apple Distribution"
+              echo "5. TestFlightにアップロード"
+              xcodebuild -exportArchive \
+                -archivePath ./build/$(APP_NAME).xcarchive \
+                -exportPath ./build/$(APP_NAME) \
+                -exportOptionsPlist ./ExportOptions.plist
+              cd ..
+            displayName: iOSリリース
