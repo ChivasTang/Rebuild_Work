@@ -1,3 +1,14 @@
 domain=https://dev.azure.com/capdd3/C-SAAF%20Rebuild
 token=4kj983IsYzCqzzPoJ2IwF4ZdO2pXfmMyBKSufUDK0OkOx7PH15SoJQQJ99BEACAAAAAsRMRtAAASAZDO3r4L
 host=Mobile
+
+
+Variablesでビルドタイプ、環境、バージョン、管理コードを指定出来るようにしてください。
+また、ビルドタイプ、環境はビルド時のコマンド引数として利用したいです。
+
+以下、選択肢です
+----
+ビルドタイプ：debug、release
+環境：cap、p7、honban
+バージョン：1.0.0、
+管理コード：1
