@@ -61,7 +61,7 @@ jobs:
       - task: PublishBuildArtifacts@1
         inputs:
           PathtoPublish: '$(Build.ArtifactStagingDirectory)'
-          ArtifactName: 'android'
+          ArtifactName: 'apk'
           publishLocation: 'Container'
         displayName: AzureのArtifactにAPKをアップロード
 
@@ -117,7 +117,7 @@ jobs:
           MARKETING_VERSION=$(xcodebuild -showBuildSettings | grep MARKETING_VERSION | head -1 | awk '{print $3}')
           CURRENT_PROJECT_VERSION=$(xcodebuild -showBuildSettings | grep CURRENT_PROJECT_VERSION | head -1 | awk '{print $3}')
           DATE=$(date +%Y%m%d)
-          IPA_NAME="${PROJECT_NAME}-${CONFIGURATION}-$SCHEME_NAME-$MARKETING_VERSION-$CURRENT_PROJECT_VERSION-${DATE}.ipa"
+          IPA_NAME="${PROJECT_NAME}-${CONFIGURATION}-$SCHEME_NAME-$MARKETING_VERSION-$CURRENT_PROJECT_VERSION-${DATE}"
           cd ..
           mv $(Build.ArtifactStagingDirectory)/ios/*.ipa $(Build.ArtifactStagingDirectory)/ios/$IPA_NAME
         displayName: 'Rename IPA File'
