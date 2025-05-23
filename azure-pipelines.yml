@@ -40,6 +40,31 @@ jobs:
           forceRepoUpdate: true
         displayName: PODインストール
 
+      # 3. Watchmanの削除・作成
+      - task: Gradle@3
+        inputs:
+          gradleWrapperFile: 'android/gradlew'
+          workingDirectory: 'android'
+          tasks: 'clean assembleRelease'
+          publishJUnitResults: false
+        displayName: Androidクリーン・ビルド
+
+      # 4. Androidビルド
+      - task: CopyFiles@2
+        inputs:
+          sourceFolder: '$(System.DefaultWorkingDirectory)/android/app/build/outputs/apk/release'
+          contents: '**/*.apk'
+          targetFolder: '$(Build.ArtifactStagingDirectory)'
+        displayName: APKファイルをステジングディレクトリにコピー
+
+      # 5. AzureのArtifactにAPKをアップロード
+      - task: PublishBuildArtifacts@1
+        inputs:
+          PathtoPublish: '$(Build.ArtifactStagingDirectory)'
+          ArtifactName: 'android'
+          publishLocation: 'Container'
+        displayName: AzureのArtifactにAPKをアップロード
+
       # 6. iOSビルド
       - script: |
           set -e
@@ -92,7 +117,7 @@ jobs:
           MARKETING_VERSION=$(xcodebuild -showBuildSettings | grep MARKETING_VERSION | head -1 | awk '{print $3}')
           CURRENT_PROJECT_VERSION=$(xcodebuild -showBuildSettings | grep CURRENT_PROJECT_VERSION | head -1 | awk '{print $3}')
           DATE=$(date +%Y%m%d)
-          IPA_NAME="${PROJECT_NAME}-${CONFIGURATION}-$SCHEME_NAME-$MARKETING_VERSION-$CURRENT_PROJECT_VERSION-${DATE}"
+          IPA_NAME="${PROJECT_NAME}-${CONFIGURATION}-$SCHEME_NAME-$MARKETING_VERSION-$CURRENT_PROJECT_VERSION-${DATE}.ipa"
           cd ..
           mv $(Build.ArtifactStagingDirectory)/ios/*.ipa $(Build.ArtifactStagingDirectory)/ios/$IPA_NAME
         displayName: 'Rename IPA File'
