@@ -40,6 +40,31 @@ jobs:
           forceRepoUpdate: true
         displayName: PODインストール
 
+      # 3. Watchmanの削除・作成
+      - task: Gradle@3
+        inputs:
+          gradleWrapperFile: 'android/gradlew'
+          workingDirectory: 'android'
+          tasks: 'clean assembleRelease'
+          publishJUnitResults: false
+        displayName: Androidクリーン・ビルド
+
+      # 4. Androidビルド
+      - task: CopyFiles@2
+        inputs:
+          sourceFolder: '$(System.DefaultWorkingDirectory)/android/app/build/outputs/apk/release'
+          contents: '**/*.apk'
+          targetFolder: '$(Build.ArtifactStagingDirectory)'
+        displayName: APKファイルをステジングディレクトリにコピー
+
+      # 5. AzureのArtifactにAPKをアップロード
+      - task: PublishBuildArtifacts@1
+        inputs:
+          PathtoPublish: '$(Build.ArtifactStagingDirectory)'
+          ArtifactName: 'apk'
+          publishLocation: 'Container'
+        displayName: AzureのArtifactにAPKをアップロード
+
       # 6. iOSビルド
       - script: |
           set -e
