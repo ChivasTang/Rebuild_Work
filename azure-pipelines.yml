@@ -28,7 +28,6 @@ jobs:
     steps:
       # 1. NodeJS依頼関係インストール
       - script: |
-          echo "1. NodeJS依頼関係インストール"
           npm install
           bundle install
         displayName: ReactNative依頼関係インストール
@@ -67,26 +66,22 @@ jobs:
 
       # 6. iOSビルド
       - script: |
-          set -e
           xcodebuild clean -workspace $(System.DefaultWorkingDirectory)/ios/$(PROJECT_NAME).xcworkspace -scheme $(SCHEME_NAME) -configuration $(CONFIGURATION)
         displayName: iOSクリーン
 
       # 7. iOSアーカイブ
       - script: |
-          set -e
           security import $(IOS_P12_FILE) -P $(IOS_P12_PASS) -A && security find-identity -v -p codesigning
         displayName: P12証明書インストール
 
       # 8. プロビジョニングプロファイルをインストール
       - script: |
-          set -e
           mkdir -p ~/Library/MobileDevice/Provisioning\ Profiles
           cp $(IOS_PROVISION) ~/Library/MobileDevice/Provisioning\ Profiles/
         displayName: PROVISIONING_PROFILEインストール
 
       # 9. iOSアーカイブを作成
       - script: |
-          set -e
           xcodebuild archive \
             -workspace $(System.DefaultWorkingDirectory)/ios/$(PROJECT_NAME).xcworkspace \
             -scheme $(PROJECT_NAME) \
@@ -100,7 +95,6 @@ jobs:
 
       # 10. Export IPA
       - script: |
-          set -e
           xcodebuild \
             -exportArchive \
             -archivePath $(System.DefaultWorkingDirectory)/ios/build/$(PROJECT_NAME).xcarchive \
@@ -111,7 +105,6 @@ jobs:
 
       # 11. IPAファイル名称修正
       - script: |
-          set -e
           cd ios
           SCHEME_NAME="pa"
           MARKETING_VERSION=$(xcodebuild -showBuildSettings | grep MARKETING_VERSION | head -1 | awk '{print $3}')
